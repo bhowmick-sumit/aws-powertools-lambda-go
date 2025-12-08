@@ -2,6 +2,7 @@ package logger
 
 import (
 	"os"
+	"strings"
 
 	"github.com/rs/zerolog"
 )
@@ -22,9 +23,13 @@ var LogMapper = map[string]zerolog.Level{
 }
 
 func NewConfig(logConfig LogConfig) *LogConfig {
+	if logConfig.writer == nil {
+		logConfig.writer = os.Stdout
+	}
 	if logConfig.logLevel == "" {
 		logConfig.logLevel = DEFAULT_LOG_LEVEL
 	}
+	logConfig.logLevel = strings.ToUpper(logConfig.logLevel)
 	return &logConfig
 }
 
@@ -34,7 +39,7 @@ func New(logConfig LogConfig) *LambdaLogger {
 	zerolog.CallerFieldName = CALLER_NAME
 	return &LambdaLogger{
 		logger: zerolog.
-			New(os.Stdout).
+			New(logConfig.writer).
 			With().
 			CallerWithSkipFrameCount(CALLER_SKIP_FRAME_COUNT).
 			Timestamp().
@@ -42,28 +47,22 @@ func New(logConfig LogConfig) *LambdaLogger {
 	}
 }
 
-func (log *LambdaLogger) Fatal(message string) {
-	log.logger.Fatal().Msg(message)
+func (log *LambdaLogger) Error(message string, args ...any) {
+	log.logger.Error().Msgf(message, args...)
 }
 
-func (log *LambdaLogger) Error(message string) {
-	log.logger.Error().Msg(message)
+func (log *LambdaLogger) Warn(message string, args ...any) {
+	log.logger.Warn().Msgf(message, args...)
 }
 
-func (log *LambdaLogger) Warn(message string) {
-	log.logger.Warn().Msg(message)
+func (log *LambdaLogger) Info(message string, args ...any) {
+	log.logger.Info().Msgf(message, args...)
 }
 
-func (log *LambdaLogger) Info(message string) {
-	log.logger.Info().Msg(message)
+func (log *LambdaLogger) Debug(message string, args ...any) {
+	log.logger.Debug().Msgf(message, args...)
 }
 
-func (log *LambdaLogger) Debug(message string) {
-	log.logger.
-		Debug().
-		Msg(message)
-}
-
-func (log *LambdaLogger) Trace(message string) {
-	log.logger.Trace().Msg(message)
+func (log *LambdaLogger) Trace(message string, args ...any) {
+	log.logger.Trace().Msgf(message, args...)
 }
