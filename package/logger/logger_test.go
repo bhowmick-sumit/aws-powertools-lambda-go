@@ -2,9 +2,33 @@ package logger
 
 import (
 	"bytes"
+	"os"
 	"strings"
 	"testing"
 )
+
+func TestLoggerNewConfigWithDefaults(t *testing.T) {
+	config := newConfig(&LogConfig{})
+	if config.LogLevel != DEFAULT_LOG_LEVEL {
+		t.Errorf("expected default log level %s, got %s", DEFAULT_LOG_LEVEL, config.LogLevel)
+	}
+	if config.Writer != os.Stdout {
+		t.Errorf("expected default writer to be os.Stdout")
+	}
+}
+
+func TestLoggerNewConfigWithCustomProperties(t *testing.T) {
+	config := newConfig(&LogConfig{
+		LogLevel: "error",
+		Writer:   os.Stderr,
+	})
+	if config.LogLevel != "ERROR" {
+		t.Errorf("expected default log level %s, got %s", "ERROR", config.LogLevel)
+	}
+	if config.Writer != os.Stderr {
+		t.Errorf("expected default writer to be os.Stdout")
+	}
+}
 
 func TestLambdaLoggerWithDefaultConfig(t *testing.T) {
 	defer func() {

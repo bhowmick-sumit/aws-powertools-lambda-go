@@ -22,7 +22,7 @@ var LogMapper = map[string]zerolog.Level{
 	"TRACE": zerolog.TraceLevel,
 }
 
-func NewConfig(logConfig LogConfig) *LogConfig {
+func newConfig(logConfig *LogConfig) *LogConfig {
 	if logConfig.Writer == nil {
 		logConfig.Writer = os.Stdout
 	}
@@ -30,11 +30,11 @@ func NewConfig(logConfig LogConfig) *LogConfig {
 		logConfig.LogLevel = DEFAULT_LOG_LEVEL
 	}
 	logConfig.LogLevel = strings.ToUpper(logConfig.LogLevel)
-	return &logConfig
+	return logConfig
 }
 
 func New(logConfig LogConfig) *LambdaLogger {
-	config := NewConfig(logConfig)
+	config := newConfig(&logConfig)
 	zerolog.SetGlobalLevel(LogMapper[config.LogLevel])
 	zerolog.CallerFieldName = CALLER_NAME
 	return &LambdaLogger{
