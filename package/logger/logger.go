@@ -2,6 +2,7 @@ package logger
 
 import (
 	"os"
+	"strings"
 
 	"github.com/rs/zerolog"
 )
@@ -21,20 +22,24 @@ var LogMapper = map[string]zerolog.Level{
 	"TRACE": zerolog.TraceLevel,
 }
 
-func NewConfig(logConfig LogConfig) *LogConfig {
-	if logConfig.logLevel == "" {
-		logConfig.logLevel = DEFAULT_LOG_LEVEL
+func newConfig(logConfig *LogConfig) *LogConfig {
+	if logConfig.Writer == nil {
+		logConfig.Writer = os.Stdout
 	}
-	return &logConfig
+	if logConfig.LogLevel == "" {
+		logConfig.LogLevel = DEFAULT_LOG_LEVEL
+	}
+	logConfig.LogLevel = strings.ToUpper(logConfig.LogLevel)
+	return logConfig
 }
 
 func New(logConfig LogConfig) *LambdaLogger {
-	config := NewConfig(logConfig)
-	zerolog.SetGlobalLevel(LogMapper[config.logLevel])
+	config := newConfig(&logConfig)
+	zerolog.SetGlobalLevel(LogMapper[config.LogLevel])
 	zerolog.CallerFieldName = CALLER_NAME
 	return &LambdaLogger{
 		logger: zerolog.
-			New(os.Stdout).
+			New(logConfig.Writer).
 			With().
 			CallerWithSkipFrameCount(CALLER_SKIP_FRAME_COUNT).
 			Timestamp().
@@ -42,28 +47,22 @@ func New(logConfig LogConfig) *LambdaLogger {
 	}
 }
 
-func (log *LambdaLogger) Fatal(message string) {
-	log.logger.Fatal().Msg(message)
+func (log *LambdaLogger) Error(message string, args ...any) {
+	log.logger.Error().Msgf(message, args...)
 }
 
-func (log *LambdaLogger) Error(message string) {
-	log.logger.Error().Msg(message)
+func (log *LambdaLogger) Warn(message string, args ...any) {
+	log.logger.Warn().Msgf(message, args...)
 }
 
-func (log *LambdaLogger) Warn(message string) {
-	log.logger.Warn().Msg(message)
+func (log *LambdaLogger) Info(message string, args ...any) {
+	log.logger.Info().Msgf(message, args...)
 }
 
-func (log *LambdaLogger) Info(message string) {
-	log.logger.Info().Msg(message)
+func (log *LambdaLogger) Debug(message string, args ...any) {
+	log.logger.Debug().Msgf(message, args...)
 }
 
-func (log *LambdaLogger) Debug(message string) {
-	log.logger.
-		Debug().
-		Msg(message)
-}
-
-func (log *LambdaLogger) Trace(message string) {
-	log.logger.Trace().Msg(message)
+func (log *LambdaLogger) Trace(message string, args ...any) {
+	log.logger.Trace().Msgf(message, args...)
 }

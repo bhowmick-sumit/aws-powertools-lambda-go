@@ -1,10 +1,14 @@
 package logger
 
-import "github.com/rs/zerolog"
+import (
+	"io"
+
+	"github.com/rs/zerolog"
+)
 
 type LogConfig struct {
-	logLevel       string
-	inject_context bool
+	LogLevel string
+	Writer   io.Writer
 }
 
 type LambdaLogger struct {
