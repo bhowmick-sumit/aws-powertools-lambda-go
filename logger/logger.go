@@ -1,6 +1,7 @@
 package logger
 
 import (
+	"context"
 	"os"
 	"strings"
 
@@ -55,10 +56,6 @@ func New(logConfig LogConfig) *LambdaLogger {
 	}
 }
 
-// func (log *LambdaLogger) addPropertie(key, value string) zerolog.Logger {
-// 	return log.logger.With().Str(key, value).Logger()
-// }
-
 func (log *LambdaLogger) Error(message string, args ...any) {
 	log.logger.Error().Msgf(message, args...)
 }
@@ -77,4 +74,8 @@ func (log *LambdaLogger) Debug(message string, args ...any) {
 
 func (log *LambdaLogger) Trace(message string, args ...any) {
 	log.logger.Trace().Msgf(message, args...)
+}
+
+func (log *LambdaLogger) IncludeContext(ctx context.Context) {
+	log.logger.WithContext(ctx)
 }
