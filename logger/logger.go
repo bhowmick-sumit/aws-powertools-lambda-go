@@ -1,22 +1,21 @@
 package logger
 
 import (
-	"context"
 	"os"
 	"strings"
 
-	"github.com/bhowmick-sumit/aws-powertools-lambda-go/internal/utils"
 	"github.com/rs/zerolog"
+	"github.com/suctl/aws-powertools-lambda-go/internal/utils"
+	"github.com/suctl/aws-powertools-lambda-go/logger/types"
 )
 
 const (
-	CALLER_NAME             = "location"
-	CALLER_SKIP_FRAME_COUNT = 3
-	DEFAULT_LOG_LEVEL       = "DEBUG"
+	callerName           = "location"
+	callerSkipFrameCount = 3
+	defaultLogLevel      = "DEBUG"
 )
 
 var LogMapper = map[string]zerolog.Level{
-	"FATAL": zerolog.FatalLevel,
 	"ERROR": zerolog.ErrorLevel,
 	"WARN":  zerolog.WarnLevel,
 	"INFO":  zerolog.InfoLevel,
@@ -24,26 +23,38 @@ var LogMapper = map[string]zerolog.Level{
 	"TRACE": zerolog.TraceLevel,
 }
 
-func setConfigFromEnvironment() {
-	logLevel := utils.GetEnvironmentVariable("POWERTOOLS_LOG_LEVEL", DEFAULT_LOG_LEVEL)
-	zerolog.SetGlobalLevel(LogMapper[strings.ToUpper(logLevel)])
+type Logger struct {
+	logger zerolog.Logger
 }
 
-func newConfig(logConfig *LogConfig) *LogConfig {
-	if logConfig.Writer == nil {
-		logConfig.Writer = os.Stdout
-	}
-	return logConfig
+func (log *Logger) Error(message string, args ...any) {
+	log.logger.Error().Msgf(message, args...)
 }
 
-func New(logConfig LogConfig) *LambdaLogger {
+func (log *Logger) Warn(message string, args ...any) {
+	log.logger.Warn().Msgf(message, args...)
+}
+
+func (log *Logger) Info(message string, args ...any) {
+	log.logger.Info().Msgf(message, args...)
+}
+
+func (log *Logger) Debug(message string, args ...any) {
+	log.logger.Debug().Msgf(message, args...)
+}
+
+func (log *Logger) Trace(message string, args ...any) {
+	log.logger.Trace().Msgf(message, args...)
+}
+
+func New(logConfig types.LogConfig) *Logger {
 	setConfigFromEnvironment()
 	config := newConfig(&logConfig)
-	zerolog.CallerFieldName = CALLER_NAME
+	zerolog.CallerFieldName = callerName
 	logger := zerolog.
 		New(config.Writer).
 		With().
-		CallerWithSkipFrameCount(CALLER_SKIP_FRAME_COUNT).
+		CallerWithSkipFrameCount(callerSkipFrameCount).
 		Timestamp().
 		Logger()
 
@@ -51,31 +62,19 @@ func New(logConfig LogConfig) *LambdaLogger {
 		logger = logger.With().Str(key, value).Logger()
 	}
 
-	return &LambdaLogger{
+	return &Logger{
 		logger: logger,
 	}
 }
 
-func (log *LambdaLogger) Error(message string, args ...any) {
-	log.logger.Error().Msgf(message, args...)
+func setConfigFromEnvironment() {
+	logLevel := utils.GetEnvironmentVariable("POWERTOOLS_LOG_LEVEL", defaultLogLevel)
+	zerolog.SetGlobalLevel(LogMapper[strings.ToUpper(logLevel)])
 }
 
-func (log *LambdaLogger) Warn(message string, args ...any) {
-	log.logger.Warn().Msgf(message, args...)
-}
-
-func (log *LambdaLogger) Info(message string, args ...any) {
-	log.logger.Info().Msgf(message, args...)
-}
-
-func (log *LambdaLogger) Debug(message string, args ...any) {
-	log.logger.Debug().Msgf(message, args...)
-}
-
-func (log *LambdaLogger) Trace(message string, args ...any) {
-	log.logger.Trace().Msgf(message, args...)
-}
-
-func (log *LambdaLogger) IncludeContext(ctx context.Context) {
-	log.logger.WithContext(ctx)
+func newConfig(logConfig *types.LogConfig) *types.LogConfig {
+	if logConfig.Writer == nil {
+		logConfig.Writer = os.Stdout
+	}
+	return logConfig
 }

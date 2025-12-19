@@ -1,4 +1,4 @@
-module github.com/bhowmick-sumit/aws-powertools-lambda-go
+module github.com/suctl/aws-powertools-lambda-go
 
 go 1.25.0
 
