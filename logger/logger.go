@@ -11,9 +11,14 @@ import (
 )
 
 const (
-	callerName           = "location"
-	callerSkipFrameCount = 3
-	defaultLogLevel      = "DEBUG"
+	callerName                  = "location"
+	callerSkipFrameCount        = 3
+	defaultLogLevel             = "DEBUG"
+	functionArnContextKey       = "invoked_function_arn"
+	functionRequestIdContextKey = "aws_request_id"
+	functionNameEnvVar          = "AWS_LAMBDA_FUNCTION_NAME"
+	functionMemorySizeEnvVar    = "AWS_LAMBDA_FUNCTION_MEMORY_SIZE"
+	failedValue                 = "unknown"
 )
 
 var LogMapper = map[string]zerolog.Level{
@@ -30,13 +35,13 @@ type Logger struct {
 
 func (log *Logger) InjectContext(ctx context.Context) {
 	lambdaContext := newLambdaContext(ctx)
-	if lambdaContext.FunctionRequestId == "unknown" {
+	if lambdaContext.FunctionRequestId == failedValue {
 		log.Warn("failed to load function request id")
 	}
-	if lambdaContext.FunctionARN == "" {
+	if lambdaContext.FunctionARN == failedValue {
 		log.Warn("failed to load function arn")
 	}
-	if lambdaContext.FunctionName == "unknown" {
+	if lambdaContext.FunctionName == failedValue {
 		log.Warn("failed to load function name")
 	}
 	if lambdaContext.FunctionMemorySize == "0" {
@@ -97,12 +102,16 @@ func setConfigFromEnvironment() {
 
 func newLambdaContext(ctx context.Context) types.LambdaContext {
 	lambdaContext := types.LambdaContext{
-		FunctionName:       utils.GetEnvironmentVariable("AWS_LAMBDA_FUNCTION_NAME", "unknown"),
-		FunctionMemorySize: utils.GetEnvironmentVariable("AWS_LAMBDA_FUNCTION_MEMORY_SIZE", "0"),
-		FunctionARN:        utils.GetEnvironmentVariable("AWS_LAMBDA_FUNCTION_INVOKED_ARN", ""),
-		FunctionRequestId:  "unknown",
+		FunctionName:       utils.GetEnvironmentVariable(functionNameEnvVar, failedValue),
+		FunctionMemorySize: utils.GetEnvironmentVariable(functionMemorySizeEnvVar, "0"),
+		FunctionARN:        failedValue,
+		FunctionRequestId:  failedValue,
 	}
-	functionRequestId := ctx.Value("function_request_id")
+	functionArn := ctx.Value(functionArnContextKey)
+	if functionArn != nil {
+		lambdaContext.FunctionARN = functionArn.(string)
+	}
+	functionRequestId := ctx.Value(functionRequestIdContextKey)
 	if functionRequestId != nil {
 		lambdaContext.FunctionRequestId = functionRequestId.(string)
 	}

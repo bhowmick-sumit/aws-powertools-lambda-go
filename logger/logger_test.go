@@ -212,7 +212,8 @@ func TestLoggerInjectContext(t *testing.T) {
 		},
 	})
 
-	ctx := context.WithValue(context.Background(), "function_request_id", "test-request-id")
+	ctx := context.WithValue(context.Background(), "aws_request_id", "test-request-id")
+	ctx = context.WithValue(ctx, "invoked_function_arn", "arn:aws:lambda:us-east-1:123456789012:function:test-function")
 
 	logger.InjectContext(ctx)
 	logger.Info("info log with lambda context")
@@ -238,7 +239,6 @@ func TestLoggerInjectContext(t *testing.T) {
 func TestLoggerInjectContextWhenFailed(t *testing.T) {
 	defer func() {
 		os.Unsetenv("AWS_LAMBDA_FUNCTION_NAME")
-		os.Unsetenv("AWS_LAMBDA_FUNCTION_INVOKED_ARN")
 		os.Unsetenv("AWS_LAMBDA_FUNCTION_MEMORY_SIZE")
 	}()
 
